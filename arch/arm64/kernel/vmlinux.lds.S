@@ -24,13 +24,6 @@ ENTRY(_text)
 
 jiffies = jiffies_64;
 
-
-#define HYPERVISOR_EXTABLE					\
-	. = ALIGN(SZ_8);					\
-	VMLINUX_SYMBOL(__start___kvm_ex_table) = .;		\
-	*(__kvm_ex_table)					\
-	VMLINUX_SYMBOL(__stop___kvm_ex_table) = .;
-
 #define HYPERVISOR_TEXT					\
 	/*						\
 	 * Align to 4 KB so that			\
@@ -46,7 +39,6 @@ jiffies = jiffies_64;
 	VMLINUX_SYMBOL(__hyp_idmap_text_end) = .;	\
 	VMLINUX_SYMBOL(__hyp_text_start) = .;		\
 	*(.hyp.text)					\
-	HYPERVISOR_EXTABLE				\
 	VMLINUX_SYMBOL(__hyp_text_end) = .;
 
 #define IDMAP_TEXT					\
@@ -162,6 +154,9 @@ SECTIONS
 		KEEP(*(.altinstructions))
 		__alt_instructions_end = .;
 	}
+	.altinstr_replacement : {
+		KEEP(*(.altinstr_replacement))
+	}
 
 	. = ALIGN(PAGE_SIZE);
 	__inittext_end = .;
@@ -222,6 +217,7 @@ SECTIONS
 	BSS_SECTION(0, 0, 0)
 
 	. = ALIGN(PAGE_SIZE);
+#ifndef CONFIG_UH
 	idmap_pg_dir = .;
 	. += IDMAP_DIR_SIZE;
 	swapper_pg_dir = .;
@@ -235,6 +231,7 @@ SECTIONS
 #ifdef CONFIG_UNMAP_KERNEL_AT_EL0
 	tramp_pg_dir = .;
 	. += PAGE_SIZE;
+#endif
 #endif
 
 	__pecoff_data_size = ABSOLUTE(. - __initdata_begin);
